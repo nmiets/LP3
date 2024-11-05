@@ -1,0 +1,43 @@
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("enter a number");
+        int n = sc.nextInt();
+
+        long startTime = System.nanoTime();
+        long endTime = System.nanoTime();
+        int resultNR = fibonacciNR(n);
+        System.out.println("Fibonacci (non recursive) of " + n + "is " + resultNR);
+        System.out.println("time taken " + (endTime-startTime));
+
+         startTime = System.nanoTime();
+         endTime = System.nanoTime();
+        int resultR = fibonacciR(n);
+        System.out.println("Fibonacci (recursive) of " + n + "is " + resultR);
+        System.out.println("time taken " + (endTime-startTime));
+
+    }
+
+    public static int fibonacciNR(int n){
+        if(n<=1){
+            return n;
+        }
+        int a = 0;
+        int b = 1;
+        for(int i=2; i<=n; i++){
+            int temp = b;
+            b= b+a;
+            a= temp;
+        }
+        return b;
+    }
+
+    public static int fibonacciR(int n){
+        if(n<=1){
+            return n;
+        }
+        return fibonacciR(n-1)+fibonacciR(n-2);
+    }
+}
