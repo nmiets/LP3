@@ -1,0 +1,222 @@
+# Importing necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from tensorflow.keras.models import Sequential()
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping
+
+# Step 1: Load the dataset
+data = pd.read_csv('./Churn_Modelling.csv')
+print("Dataset Shape:", data.shape)
+data.head()
+
+# Step 2: Distinguish the feature and target set
+# Dropping irrelevant columns
+X = data.drop(columns=['RowNumber', 'CustomerId', 'Surname', 'Exited'])
+y = data['Exited']  # 'Exited' column is the target
+
+# Encoding categorical features
+le_geography = LabelEncoder()
+X['Geography'] = le_geography.fit_transform(X['Geography'])
+
+le_gender = LabelEncoder()
+X['Gender'] = le_gender.fit_transform(X['Gender'])
+
+# Step 3: Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 4: Normalize the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 5: Initialize and build the neural network model
+model = Sequential()
+model.add(Dense(64, activation='relu', input_shape=(X_train.shape[1],)))
+model.add(Dropout(0.3))  # Adding dropout to prevent overfitting
+model.add(Dense(32, activation='relu'))
+model.add(Dropout(0.3))
+model.add(Dense(1, activation='sigmoid'))  # Output layer with sigmoid for binary classification
+
+# Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Model Summary
+model.summary()
+
+# Early stopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
+
+# Step 6: Model Evaluation
+# Plot training history
+plt.figure(figsize=(14, 5))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Training and Validation Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+# Make predictions
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+
+# Calculate accuracy score
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy Score:", accuracy)
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+
+# Plot Confusion Matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=['Not Churn', 'Churn'], yticklabels=['Not Churn', 'Churn'])
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.show()
+
+# Classification Report
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+# Make predictions
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+
+# Convert predictions back to the original DataFrame's index
+# First, create a DataFrame from y_test with matching indices
+y_test_df = y_test.reset_index(drop=True)
+
+# Create a DataFrame for predictions
+predictions_df = pd.DataFrame(y_pred, columns=["Predicted"], index=y_test_df.index)
+
+# Combine the predictions with the original test set DataFrame (re-indexed)
+results_df = X_test.copy()
+results_df = pd.DataFrame(scaler.inverse_transform(results_df), columns=X.columns)
+results_df['True Label'] = y_test_df
+results_df['Predicted Label'] = predictions_df
+
+# Display the updated DataFrame with the true and predicted labels
+results_df.head()
+
+
+***********************************************************************************************************
+
+
+#cell1
+import pandas as pd
+
+
+#cell2
+df = pd.read_csv('Churn_Modelling.csv')
+df
+
+
+#cell3
+# df = df.drop(['RowNumber', 'CustomerId', 'Surname'], axis=1) ## column that
+help(pd.get_dummies)
+
+
+#cell4
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
+# Define the target variable
+y = df['Exited']
+
+# Drop non-predictive columns
+X = df.drop(['RowNumber', 'CustomerId', 'Surname', 'Exited'], axis=1) ##RnCiSurEx
+
+# Encode categorical features
+X['Gender'] = LabelEncoder().fit_transform(X['Gender'])  # note syntax
+print(X['Geography'].unique())
+# X = pd.get_dummies(X, columns=['Geography']) 
+X = pd.get_dummies(X, columns=['Geography'], drop_first=True) #for k-1 of k nodes 
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X
+
+
+#cell5
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+
+# Fit the scaler on the training data and transform both training and test data
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+# X_train
+
+#if tensorflow is not installed
+!pip install tensorflow
+
+
+
+#cell6
+# Step 4: Initialize and build the model
+import tensorflow as tf
+print("TensorFlow version:", tf.__version__)
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+
+# Initialize the neural network
+model = Sequential()
+
+# Input layer and first hidden layer
+model.add(Dense(units=64, activation='relu', input_dim=X_train.shape[1]))
+
+# Second hidden layer
+model.add(Dense(units=32, activation='relu'))
+
+# Optional dropout layer for regularization
+model.add(Dropout(0.3))
+
+# Output layer
+model.add(Dense(units=1, activation='sigmoid'))
+
+# Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_split=0.2)
+
+# Evaluate the model
+loss, accuracy = model.evaluate(X_test, y_test)
+print(f"Test Accuracy: {accuracy:.2f}")
+
+
+
+#cell7
+from sklearn.metrics import confusion_matrix, classification_report
+
+# Predict on the test set
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+
+# Print the confusion matrix
+help(confusion_matrix)
+conf_matrix = confusion_matrix(y_test, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
+
+
+#cell8
+# Print the classification report
+help(classification_report)
+print("Classification Report:")
+print(classification_report(y_test, y_pred)) 
